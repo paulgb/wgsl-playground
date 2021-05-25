@@ -1,5 +1,7 @@
 # wgsl-playground
 
+[![crates.io](https://img.shields.io/crates/v/wgsl-playground.svg)](https://crates.io/crates/wgsl-playground)
+
 This is a simple playground for playing with [WGSL](https://www.w3.org/TR/WGSL/) fragment shaders.
 It is invoked by passing it a `wgsl` file. The program then looks for a framgent shader called
 `fs_main` in the wgsl file provided and renders it across the window. This is similar to what
