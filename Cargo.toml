@@ -3,6 +3,8 @@ name = "wgsl-playground"
 version = "0.1.0"
 authors = ["Paul Butler <paulgb@gmail.com>"]
 edition = "2018"
+license = "MIT"
+description = "Playground for experimenting with WGSL fragment shaders with live-reloading."
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 

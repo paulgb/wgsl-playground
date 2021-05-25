@@ -19,7 +19,6 @@ fn fs_main(in: VertexOutput) -> [[location(0)]] vec4<f32> {
     let delta = abs(uniforms.mouse - in.coord - vec2<f32>(r/2., r/2.)) % vec2<f32>(r, r) - vec2<f32>(r / 2., r / 2.);
     let c = dot(delta, delta);
     
-
     if (c > (r / 100.)) {
         discard;
     }
