@@ -11,7 +11,7 @@ rather than in your browser.
 `wgsl-playground` also watches the file for edits. Whenever you save the file, it rebuilds the pipeline
 with the updated shader and swaps it into the redraw process.
 
-Under the hood, it uses [wgsl](https://github.com/gfx-rs/wgpu) for rendering and
+Under the hood, it uses [wgpu](https://github.com/gfx-rs/wgpu) for rendering and
 [naga](https://github.com/gfx-rs/naga) for validation.
 
 **Note that WGSL is still an evolving spec.** This tool is for people who want to learn some WSGL
