@@ -18,8 +18,11 @@ struct Reload;
 struct Opts {
     wgsl_file: PathBuf,
 
-    #[clap(short)]
+    #[clap(short, long)]
     create: bool,
+
+    #[clap(short, long)]
+    always_on_top: bool,
 }
 
 #[repr(C)]
@@ -180,12 +183,12 @@ impl Playground {
         self.window.request_redraw();
     }
 
-    pub fn run(watch_path: PathBuf) {
+    pub fn run(opts: &Opts) {
         let event_loop: EventLoop<Reload> = EventLoop::with_user_event();
         let proxy = event_loop.create_proxy();
 
         {
-            let watch_path = watch_path.clone();
+            let watch_path = opts.wgsl_file.clone();
             std::thread::spawn(move || Self::listen(watch_path, proxy));
         }
 
@@ -195,6 +198,9 @@ impl Playground {
             .build(&event_loop)
             .unwrap();
         let size = window.inner_size();
+
+        window.set_always_on_top(opts.always_on_top);
+
         let instance = wgpu::Instance::new(BackendBit::all());
         let surface = unsafe { instance.create_surface(&window) };
         let (adapter, device, queue) = block_on(Self::get_async_stuff(&instance, &surface));
@@ -241,7 +247,7 @@ impl Playground {
             &vertex_shader_module,
             &pipeline_layout,
             swapchain_format,
-            &watch_path,
+            &opts.wgsl_file,
         ) {
             Ok(render_pipeline) => render_pipeline,
             Err(e) => {
@@ -272,7 +278,7 @@ impl Playground {
         });
 
         let mut playground = Playground {
-            watch_path,
+            watch_path: opts.wgsl_file.clone(),
             render_pipeline,
             window,
             device,
@@ -361,5 +367,5 @@ fn main() {
         file.write_all(include_bytes!("frag.default.wgsl")).unwrap();
     }
 
-    Playground::run(opts.wgsl_file);
+    Playground::run(&opts);
 }
