@@ -18,7 +18,7 @@ fn fs_main(in: VertexOutput) -> [[location(0)]] vec4<f32> {
         if (x*x + y*y > 4.) {
             break;
         }
-        var xtemp: f32 = (x * x) - (y * y) + c.x;
+        let xtemp: f32 = (x * x) - (y * y) + c.x;
         y = 2. * x * y + c.y;
         x = xtemp;
     }
