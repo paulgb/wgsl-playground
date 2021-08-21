@@ -283,7 +283,7 @@ impl Playground {
 
         let instant = Instant::now();
 
-        event_loop.run(move |event, _, control_flow| {
+        event_loop.run(move |event, _, control_flow|
             match event {
             winit::event::Event::WindowEvent { ref event, .. } => match event {
                 WindowEvent::CloseRequested => *control_flow = ControlFlow::Exit,
@@ -339,7 +339,7 @@ impl Playground {
                 playground.window.request_redraw();
             }
             _ => {}
-        }});
+        });
     }
 }
 
