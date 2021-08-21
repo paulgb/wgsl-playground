@@ -1,6 +1,6 @@
 use clap::Clap;
 use futures::executor::block_on;
-use naga::{valid::{ValidationFlags, Validator}};
+use naga::{valid::{Capabilities, ValidationFlags, Validator}};
 use notify::{RawEvent, RecommendedWatcher, Watcher};
 use std::{borrow::Cow, fs::{read_to_string, OpenOptions}, io::Write, path::{Path, PathBuf}, sync::mpsc::channel, time::Instant};
 use wgpu::{Adapter, BackendBit, BindGroupDescriptor, BindGroupEntry, BindGroupLayoutDescriptor, BindGroupLayoutEntry, BufferBindingType, BufferUsage, CommandEncoderDescriptor, Device, DeviceDescriptor, Features, Instance, Limits, LoadOp, Operations, PipelineLayout, PrimitiveState, Queue, RenderPassColorAttachment, RenderPassDescriptor, RenderPipeline, RequestAdapterOptions, ShaderFlags, ShaderModule, ShaderSource, ShaderStage, Surface, SwapChain, SwapChainDescriptor, TextureFormat, TextureUsage, util::{BufferInitDescriptor, DeviceExt}};
@@ -144,7 +144,7 @@ impl Playground {
         let module =
             naga::front::wgsl::parse_str(&frag_wgsl).map_err(|e| format!("Parse Error: {}", &e))?;
 
-        Validator::new(ValidationFlags::all())
+        Validator::new(ValidationFlags::all(), Capabilities::all())
             .validate(&module)
             .map_err(|e| format!("Validation Error: {}", &e))?;
 
