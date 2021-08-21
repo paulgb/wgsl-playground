@@ -1,15 +1,15 @@
 use clap::Clap;
 use futures::executor::block_on;
-use naga::{valid::{ValidationFlags, Validator}};
 use notify::{RawEvent, RecommendedWatcher, Watcher};
+use wgpu::{Adapter, Backends, BindGroupDescriptor, BindGroupEntry, BindGroupLayoutDescriptor, BindGroupLayoutEntry, BufferBindingType, BufferUsages, CommandEncoderDescriptor, Device, DeviceDescriptor, Features, Instance, Limits, LoadOp, Operations, PipelineLayout, PrimitiveState, Queue, RenderPassColorAttachment, RenderPassDescriptor, RenderPipeline, RequestAdapterOptions, ShaderModule, ShaderSource, ShaderStages, Surface, SurfaceConfiguration, TextureFormat, util::{BufferInitDescriptor, DeviceExt}};
 use std::{borrow::Cow, fs::{read_to_string, OpenOptions}, io::Write, path::{Path, PathBuf}, sync::mpsc::channel, time::Instant};
-use wgpu::{Adapter, BackendBit, BindGroupDescriptor, BindGroupEntry, BindGroupLayoutDescriptor, BindGroupLayoutEntry, BufferBindingType, BufferUsage, CommandEncoderDescriptor, Device, DeviceDescriptor, Features, Instance, Limits, LoadOp, Operations, PipelineLayout, PrimitiveState, Queue, RenderPassColorAttachment, RenderPassDescriptor, RenderPipeline, RequestAdapterOptions, ShaderFlags, ShaderModule, ShaderSource, ShaderStage, Surface, SwapChain, SwapChainDescriptor, TextureFormat, TextureUsage, util::{BufferInitDescriptor, DeviceExt}};
 use winit::{
     dpi::PhysicalSize,
     event::WindowEvent,
     event_loop::{ControlFlow, EventLoop, EventLoopProxy},
     window::{Window, WindowBuilder},
 };
+use wgpu_subscriber;
 
 #[derive(Debug)]
 struct Reload;
@@ -55,8 +55,7 @@ struct Playground {
     vertex_shader_module: ShaderModule,
     pipeline_layout: PipelineLayout,
     swapchain_format: TextureFormat,
-    swap_chain: SwapChain,
-    sc_desc: SwapChainDescriptor,
+    surface_config: SurfaceConfiguration,
     surface: Surface,
     
     uniforms: Uniforms,
@@ -141,17 +140,9 @@ impl Playground {
     ) -> Result<RenderPipeline, String> {
         let frag_wgsl = read_to_string(&frag_shader_path).unwrap();
 
-        let module =
-            naga::front::wgsl::parse_str(&frag_wgsl).map_err(|e| format!("Parse Error: {}", &e))?;
-
-        Validator::new(ValidationFlags::all())
-            .validate(&module)
-            .map_err(|e| format!("Validation Error: {}", &e))?;
-
         let fragement_shader_module = device.create_shader_module(&wgpu::ShaderModuleDescriptor {
             label: Some("Fragment shader"),
             source: ShaderSource::Wgsl(Cow::Owned(frag_wgsl)),
-            flags: ShaderFlags::all(),
         });
 
         Ok(
@@ -176,10 +167,10 @@ impl Playground {
     }
 
     pub fn resize(&mut self, new_size: &PhysicalSize<u32>) {
-        self.sc_desc.width = new_size.width;
-        self.sc_desc.height = new_size.height;
+        self.surface_config.width = new_size.width;
+        self.surface_config.height = new_size.height;
 
-        self.swap_chain = self.device.create_swap_chain(&self.surface, &self.sc_desc);
+        self.surface.configure(&self.device, &self.surface_config);
         self.window.request_redraw();
     }
 
@@ -201,13 +192,13 @@ impl Playground {
 
         window.set_always_on_top(opts.always_on_top);
 
-        let instance = wgpu::Instance::new(BackendBit::all());
+        let instance = wgpu::Instance::new(Backends::all());
         let surface = unsafe { instance.create_surface(&window) };
         let (adapter, device, queue) = block_on(Self::get_async_stuff(&instance, &surface));
+
         let vertex_shader_module = device.create_shader_module(&wgpu::ShaderModuleDescriptor {
             label: Some("Vertex shader"),
-            source: ShaderSource::Wgsl(Cow::Borrowed(include_str!("vertex.wgsl"))),
-            flags: ShaderFlags::all(),
+            source: wgpu::ShaderSource::Wgsl(include_str!("./vertex.wgsl").into()),
         });
 
         let uniforms = Uniforms::default();
@@ -215,7 +206,7 @@ impl Playground {
         let uniforms_buffer = device.create_buffer_init(&BufferInitDescriptor {
             label: None,
             contents: uniforms.as_bytes(),
-            usage: BufferUsage::UNIFORM | BufferUsage::COPY_DST,
+            usage: BufferUsages::UNIFORM | BufferUsages::COPY_DST,
         });
 
         let uniforms_buffer_layout = device.create_bind_group_layout(&BindGroupLayoutDescriptor {
@@ -223,7 +214,7 @@ impl Playground {
             entries: &[
                 BindGroupLayoutEntry {
                     binding: 0,
-                    visibility: ShaderStage::FRAGMENT,
+                    visibility: ShaderStages::FRAGMENT,
                     count: None,
                     ty: wgpu::BindingType::Buffer {
                         ty: BufferBindingType::Uniform,
@@ -240,7 +231,7 @@ impl Playground {
             push_constant_ranges: &[],
         });
 
-        let swapchain_format = adapter.get_swap_chain_preferred_format(&surface).unwrap();
+        let swapchain_format = surface.get_preferred_format(&adapter).unwrap();
 
         let render_pipeline = match Self::create_pipeline(
             &device,
@@ -256,15 +247,15 @@ impl Playground {
             }
         };
 
-        let sc_desc = wgpu::SwapChainDescriptor {
-            usage: TextureUsage::RENDER_ATTACHMENT,
+        let surface_config = SurfaceConfiguration {
+            usage: wgpu::TextureUsages::RENDER_ATTACHMENT,
             format: swapchain_format,
             width: size.width,
-            height: size.height,
+            height: size.height,                                                                                          
             present_mode: wgpu::PresentMode::Mailbox,
         };
 
-        let swap_chain = device.create_swap_chain(&surface, &sc_desc);
+        surface.configure(&device, &surface_config);
 
         let uniforms_buffer_bind_group = device.create_bind_group(&BindGroupDescriptor {
             label: None,
@@ -285,15 +276,15 @@ impl Playground {
             swapchain_format,
             pipeline_layout,
             vertex_shader_module,
-            swap_chain,
-            sc_desc,
+            surface_config,
             surface,
             uniforms,
         };
 
         let instant = Instant::now();
 
-        event_loop.run(move |event, _, control_flow| match event {
+        event_loop.run(move |event, _, control_flow|
+            match event {
             winit::event::Event::WindowEvent { ref event, .. } => match event {
                 WindowEvent::CloseRequested => *control_flow = ControlFlow::Exit,
                 WindowEvent::Resized(new_size) => playground.resize(new_size),
@@ -311,7 +302,12 @@ impl Playground {
             winit::event::Event::RedrawRequested(_) => {
                 playground.uniforms.time = instant.elapsed().as_secs_f32();
                 queue.write_buffer(&uniforms_buffer, 0, playground.uniforms.as_bytes());
-                let frame = playground.swap_chain.get_current_frame().unwrap().output;
+                let output_frame = playground.surface.get_current_frame().unwrap();
+                let view = output_frame
+                    .output
+                    .texture
+                    .create_view(&wgpu::TextureViewDescriptor::default());
+
                 let mut encoder = playground
                     .device
                     .create_command_encoder(&CommandEncoderDescriptor { label: None });
@@ -320,7 +316,7 @@ impl Playground {
                     let mut render_pass = encoder.begin_render_pass(&RenderPassDescriptor {
                         label: None,
                         color_attachments: &[RenderPassColorAttachment {
-                            view: &frame.view,
+                            view: &view,
                             resolve_target: None,
                             ops: Operations {
                                 load: LoadOp::Clear(wgpu::Color::BLACK),
@@ -348,6 +344,7 @@ impl Playground {
 }
 
 fn main() {
+    wgpu_subscriber::initialize_default_subscriber(None);
     let opts = Opts::parse();
 
     if opts.create {
