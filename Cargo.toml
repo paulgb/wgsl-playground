@@ -5,6 +5,7 @@ authors = ["Paul Butler <paulgb@gmail.com>"]
 edition = "2018"
 license = "MIT"
 description = "Playground for experimenting with WGSL fragment shaders with live-reloading."
+resolver = "2"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
@@ -12,7 +13,7 @@ description = "Playground for experimenting with WGSL fragment shaders with live
 bytemuck = { version = "1.5.1", features = ["derive"] }
 clap = "3.0.0-beta.2"
 futures = "0.3.15"
-naga = { version = "0.6.0", features = ['default', 'wgsl-in'] }
 notify = "4.0.17"
-wgpu = "0.8.1"
+wgpu = { version = "0.10.1", features = ['default', 'naga'] }
 winit = "0.25.0"
+wgpu-subscriber = "0.1.0"

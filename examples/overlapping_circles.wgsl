@@ -21,7 +21,7 @@ fn circle(c: vec2<f32>, r: f32, probe: vec2<f32>) -> bool {
     }
 }
 
-let colors: array<vec3<f32>, 10> = array<vec3<f32>, 10>(
+var colors: array<vec3<f32>, 10> = array<vec3<f32>, 10>(
     vec3<f32>(0., 0., 0.),
     vec3<f32>(0.01, 0.01, 0.01),
     vec3<f32>(0.4, 0.0, 0.0),
