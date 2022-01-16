@@ -1,7 +1,7 @@
-use clap::Clap;
+use clap::Parser;
 use futures::executor::block_on;
 use notify::{RawEvent, RecommendedWatcher, Watcher};
-use wgpu::{Adapter, Backends, BindGroupDescriptor, BindGroupEntry, BindGroupLayoutDescriptor, BindGroupLayoutEntry, BufferBindingType, BufferUsages, CommandEncoderDescriptor, Device, DeviceDescriptor, Features, Instance, Limits, LoadOp, Operations, PipelineLayout, PrimitiveState, Queue, RenderPassColorAttachment, RenderPassDescriptor, RenderPipeline, RequestAdapterOptions, ShaderModule, ShaderSource, ShaderStages, Surface, SurfaceConfiguration, TextureFormat, util::{BufferInitDescriptor, DeviceExt}};
+use wgpu::{Adapter, Backends, BindGroupDescriptor, BindGroupEntry, BindGroupLayoutDescriptor, BindGroupLayoutEntry, BufferBindingType, BufferUsages, CommandEncoderDescriptor, Device, DeviceDescriptor, Features, Instance, Limits, LoadOp, Operations, PipelineLayout, PrimitiveState, Queue, RenderPassColorAttachment, RenderPassDescriptor, RenderPipeline, RequestAdapterOptions, ShaderModule, ShaderSource, ShaderStages, Surface, SurfaceConfiguration, TextureFormat, util::{BufferInitDescriptor, DeviceExt}, RenderPipelineDescriptor};
 use std::{borrow::Cow, fs::{read_to_string, OpenOptions}, io::Write, path::{Path, PathBuf}, sync::mpsc::channel, time::Instant};
 use winit::{
     dpi::PhysicalSize,
@@ -14,7 +14,7 @@ use wgpu_subscriber;
 #[derive(Debug)]
 struct Reload;
 
-#[derive(Clap)]
+#[derive(Parser)]
 struct Opts {
     wgsl_file: PathBuf,
 
@@ -99,6 +99,7 @@ impl Playground {
             .request_adapter(&RequestAdapterOptions {
                 power_preference: wgpu::PowerPreference::HighPerformance,
                 compatible_surface: Some(surface),
+                ..RequestAdapterOptions::default()
             })
             .await
             .unwrap();
@@ -146,7 +147,7 @@ impl Playground {
         });
 
         Ok(
-            device.create_render_pipeline(&wgpu::RenderPipelineDescriptor {
+            device.create_render_pipeline(&RenderPipelineDescriptor {
                 label: None,
                 layout: Some(&pipeline_layout),
                 vertex: wgpu::VertexState {
@@ -162,6 +163,7 @@ impl Playground {
                     entry_point: "fs_main",
                     targets: &[swapchain_format.into()],
                 }),
+                multiview: None,
             }),
         )
     }
@@ -302,9 +304,8 @@ impl Playground {
             winit::event::Event::RedrawRequested(_) => {
                 playground.uniforms.time = instant.elapsed().as_secs_f32();
                 queue.write_buffer(&uniforms_buffer, 0, playground.uniforms.as_bytes());
-                let output_frame = playground.surface.get_current_frame().unwrap();
-                let view = output_frame
-                    .output
+                let output_texture = playground.surface.get_current_texture().unwrap();
+                let view = output_texture
                     .texture
                     .create_view(&wgpu::TextureViewDescriptor::default());
 
