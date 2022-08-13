@@ -1,10 +1,10 @@
 struct VertexOutput {
-    [[location(0)]] coord: vec2<f32>;
-    [[builtin(position)]] position: vec4<f32>;
+    @builtin(position) position: vec4<f32>,
+    @location(0) coord: vec2<f32>,
 };
 
-[[stage(fragment)]]
-fn fs_main(in: VertexOutput) -> [[location(0)]] vec4<f32> {
+@fragment
+fn fs_main(in: VertexOutput) -> @location(0) vec4<f32> {
     let r: f32 = dot(in.coord, in.coord);
 
     if (r > .95) {

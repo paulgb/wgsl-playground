@@ -1,19 +1,18 @@
 struct VertexOutput {
-    [[location(0)]] coord: vec2<f32>;
-    [[builtin(position)]] position: vec4<f32>;
+    @builtin(position) position: vec4<f32>,
+    @location(0) coord: vec2<f32>,
 };
 
-[[block]]
 struct Uniforms {
-    mouse: vec2<f32>;
-    time: f32;
+    mouse: vec2<f32>,
+    time: f32,
 };
 
-[[group(0), binding(0)]]
-var uniforms: Uniforms;
+@group(0) @binding(0)
+var<uniform> uniforms: Uniforms;
 
-[[stage(fragment)]]
-fn fs_main(in: VertexOutput) -> [[location(0)]] vec4<f32> {
+@fragment
+fn fs_main(in: VertexOutput) -> @location(0) vec4<f32> {
     let normalized = (in.coord + vec2<f32>(1., 1.)) / 2.;
 
     let angle = sin(uniforms.time);

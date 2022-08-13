@@ -1,16 +1,15 @@
 struct VertexOutput {
-    [[location(0)]] coord: vec2<f32>;
-    [[builtin(position)]] position: vec4<f32>;
+    @builtin(position) position: vec4<f32>,
+    @location(0) coord: vec2<f32>,
 };
 
-[[block]]
 struct Uniforms {
-    mouse: vec2<f32>;
-    time: f32;
+    mouse: vec2<f32>,
+    time: f32,
 };
 
-[[group(0), binding(0)]]
-var uniforms: Uniforms;
+@group(0) @binding(0)
+var<uniform> uniforms: Uniforms;
 
 fn circle(c: vec2<f32>, r: f32, probe: vec2<f32>) -> bool {
     let delta = probe - c;
@@ -21,22 +20,22 @@ fn circle(c: vec2<f32>, r: f32, probe: vec2<f32>) -> bool {
     }
 }
 
-var colors: array<vec3<f32>, 10> = array<vec3<f32>, 10>(
-    vec3<f32>(0., 0., 0.),
-    vec3<f32>(0.01, 0.01, 0.01),
-    vec3<f32>(0.4, 0.0, 0.0),
-    vec3<f32>(0.5, 0.2, 0.2),
-    vec3<f32>(0.6, 0.5, 0.4),
-    vec3<f32>(0.7, 0.5, 0.3),
-    vec3<f32>(0.9, 0.6, 0.4),
-    vec3<f32>(1., 1., 1.),
-    vec3<f32>(1., 1., 1.),
-    vec3<f32>(1., 1., 1.),
-);
-
-[[stage(fragment)]]
-fn fs_main(in: VertexOutput) -> [[location(0)]] vec4<f32> {
+@fragment
+fn fs_main(in: VertexOutput) -> @location(0) vec4<f32> {
     var c: u32 = 0u;
+
+    var colors: array<vec3<f32>, 10> = array<vec3<f32>, 10>(
+        vec3<f32>(0., 0., 0.),
+        vec3<f32>(0.01, 0.01, 0.01),
+        vec3<f32>(0.4, 0.0, 0.0),
+        vec3<f32>(0.5, 0.2, 0.2),
+        vec3<f32>(0.6, 0.5, 0.4),
+        vec3<f32>(0.7, 0.5, 0.3),
+        vec3<f32>(0.9, 0.6, 0.4),
+        vec3<f32>(1., 1., 1.),
+        vec3<f32>(1., 1., 1.),
+        vec3<f32>(1., 1., 1.),
+    );
 
     for (var i: u32 = 1u; i < 500u; i = i + 1u) {
         let rx: f32 = fract(sin(f32(i)) * 1000.);
