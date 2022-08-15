@@ -1,14 +1,14 @@
 // This is a work in progress.
 
 struct VertexOutput {
-    [[location(0)]] coord: vec2<f32>;
-    [[builtin(position)]] position: vec4<f32>;
+    @builtin(position) position: vec4<f32>,
+    @location(0) coord: vec2<f32>,
 };
 
 let ITERATIONS: i32 = 45;
 
-[[stage(fragment)]]
-fn fs_main(in: VertexOutput) -> [[location(0)]] vec4<f32> {
+@fragment
+fn fs_main(in: VertexOutput) -> @location(0) vec4<f32> {
     let c: vec2<f32> = (in.coord + vec2<f32>(-0.5, 0.)) * 1.3;
     var x: f32 = 0.;
     var y: f32 = 0.;
