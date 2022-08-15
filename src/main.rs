@@ -1,13 +1,12 @@
-use clap::Clap;
+use clap::Parser;
 use futures::executor::block_on;
 use notify::{RawEvent, RecommendedWatcher, Watcher};
 use std::{
     borrow::Cow,
     fs::{read_to_string, OpenOptions},
-    io::Write,
     path::{Path, PathBuf},
     sync::mpsc::channel,
-    time::Instant,
+    time::Instant, io::Write,
 };
 use wgpu::{
     util::{BufferInitDescriptor, DeviceExt},
@@ -28,7 +27,7 @@ use winit::{
 #[derive(Debug)]
 struct Reload;
 
-#[derive(Clap)]
+#[derive(Parser)]
 struct Opts {
     wgsl_file: PathBuf,
 
