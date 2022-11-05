@@ -12,6 +12,6 @@ bytemuck = { version = "1.12.0", features = ["derive"] }
 clap = { version = "3.2.17", features = ["derive"] }
 futures = "0.3.23"
 notify = "4.0.17"
-wgpu = { version = "0.13.1", features = ['default', 'naga'] }
+wgpu = { version = "0.14.0", features = ['default', 'naga'] }
 winit = "0.27.1"
 wgpu-subscriber = "0.1.0"

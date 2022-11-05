@@ -11,11 +11,11 @@ use std::{
 use wgpu::{
     util::{BufferInitDescriptor, DeviceExt},
     Adapter, Backends, BindGroupDescriptor, BindGroupEntry, BindGroupLayoutDescriptor,
-    BindGroupLayoutEntry, BufferBindingType, BufferUsages, CommandEncoderDescriptor, Device,
-    DeviceDescriptor, Features, Instance, Limits, LoadOp, Operations, PipelineLayout,
-    PrimitiveState, Queue, RenderPassColorAttachment, RenderPassDescriptor, RenderPipeline,
-    RequestAdapterOptions, ShaderModule, ShaderSource, ShaderStages, Surface, SurfaceConfiguration,
-    TextureFormat,
+    BindGroupLayoutEntry, BufferBindingType, BufferUsages, CommandEncoderDescriptor,
+    CompositeAlphaMode, Device, DeviceDescriptor, Features, Instance, Limits, LoadOp, Operations,
+    PipelineLayout, PrimitiveState, Queue, RenderPassColorAttachment, RenderPassDescriptor,
+    RenderPipeline, RequestAdapterOptions, ShaderModule, ShaderSource, ShaderStages, Surface,
+    SurfaceConfiguration, TextureFormat,
 };
 use winit::{
     dpi::PhysicalSize,
@@ -270,6 +270,7 @@ impl Playground {
             width: size.width,
             height: size.height,
             present_mode: wgpu::PresentMode::Fifo,
+            alpha_mode: CompositeAlphaMode::Auto,
         };
 
         surface.configure(&device, &surface_config);
