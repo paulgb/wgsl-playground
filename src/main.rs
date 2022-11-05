@@ -4,9 +4,10 @@ use notify::{RawEvent, RecommendedWatcher, Watcher};
 use std::{
     borrow::Cow,
     fs::{read_to_string, OpenOptions},
+    io::Write,
     path::{Path, PathBuf},
     sync::mpsc::channel,
-    time::Instant, io::Write,
+    time::Instant,
 };
 use wgpu::{
     util::{BufferInitDescriptor, DeviceExt},
@@ -154,7 +155,7 @@ impl Playground {
         swapchain_format: TextureFormat,
         frag_shader_path: &Path,
     ) -> Result<RenderPipeline, String> {
-        let frag_wgsl = read_to_string(&frag_shader_path).unwrap();
+        let frag_wgsl = read_to_string(frag_shader_path).unwrap();
 
         let fragement_shader_module = device.create_shader_module(wgpu::ShaderModuleDescriptor {
             label: Some("Fragment shader"),
@@ -317,7 +318,7 @@ impl Playground {
                 let output_frame = playground.surface.get_current_texture();
 
                 if output_frame.is_err() {
-                    return
+                    return;
                 }
 
                 let output = output_frame.unwrap();
@@ -352,7 +353,6 @@ impl Playground {
 
                 queue.submit(std::iter::once(encoder.finish()));
                 output.present();
-                
             }
             winit::event::Event::UserEvent(Reload) => {
                 playground.reload();
