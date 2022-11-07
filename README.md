@@ -17,7 +17,7 @@ Under the hood, it uses [wgpu](https://github.com/gfx-rs/wgpu) for rendering and
 **Note that WGSL is still an evolving spec.** This tool is for people who want to learn some WSGL
 in its current form.
 
-![A screenshot showing a grid of circles.](screenshot.png)
+![A screenshot showing a grid of circles.](https://raw.githubusercontent.com/paulgb/wgsl-playground/main/screenshot.png)
 
 A number of examples shaders are in the `examples` directory. The screenshot above shows the `uniforms.wgsl` shader.
 
