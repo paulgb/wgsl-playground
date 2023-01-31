@@ -28,8 +28,8 @@ use winit::event::Event::UserEvent;
 
 #[derive(Debug)]
 enum UserEvents {
-  Reload,
-    WGPUError
+    Reload,
+    WGPUError,
 }
 
 
@@ -103,10 +103,10 @@ impl Playground {
         loop {
             match rx.recv() {
                 Ok(RawEvent {
-                    path: Some(_),
-                    op: Ok(_),
-                    ..
-                }) => {
+                       path: Some(_),
+                       op: Ok(_),
+                       ..
+                   }) => {
                     proxy.send_event(UserEvents::Reload).unwrap();
                 }
                 Ok(event) => println!("broken event: {:?}", event),
@@ -223,9 +223,10 @@ impl Playground {
 
         let mut error_state = false;
 
-        // Handle errors and stop redraw
+        // Handle errors
         let proxy = event_loop.create_proxy();
         device.on_uncaptured_error(move |error| {
+            // Sending the event will stop the redraw
             proxy.send_event(UserEvents::WGPUError).unwrap();
             if let wgpu::Error::Validation { source, description } = error {
                 if let Some(_) = description.find("note: label = `Fragment shader`") {
@@ -235,7 +236,6 @@ impl Playground {
                 println!("{}", error);
             }
         });
-
 
         let vertex_shader_module = device.create_shader_module(wgpu::ShaderModuleDescriptor {
             label: Some("Vertex shader"),
@@ -306,6 +306,7 @@ impl Playground {
             }],
         });
 
+
         let mut playground = Playground {
             watch_path: opts.wgsl_file.clone(),
             render_pipeline,
@@ -318,6 +319,7 @@ impl Playground {
             surface,
             uniforms,
         };
+
 
         let instant = Instant::now();
         event_loop.run(move |event, _, control_flow| match event {
@@ -380,7 +382,7 @@ impl Playground {
                     UserEvents::Reload => {
                         error_state = false;
                         playground.reload()
-                    },
+                    }
                     UserEvents::WGPUError => {
                         error_state = true;
                     }
