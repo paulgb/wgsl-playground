@@ -24,9 +24,14 @@ use winit::{
     event_loop::{ControlFlow, EventLoopBuilder, EventLoopProxy},
     window::{Window, WindowBuilder},
 };
+use winit::event::Event::UserEvent;
 
 #[derive(Debug)]
-struct Reload;
+enum UserEvents {
+  Reload,
+    WGPUError
+}
+
 
 #[derive(Parser)]
 struct Opts {
@@ -86,7 +91,7 @@ impl Playground {
         self.window.request_redraw();
     }
 
-    fn listen(watch_path: PathBuf, proxy: EventLoopProxy<Reload>) {
+    fn listen(watch_path: PathBuf, proxy: EventLoopProxy<UserEvents>) {
         let (tx, rx) = channel();
 
         let mut watcher: RecommendedWatcher = Watcher::new_raw(tx).unwrap();
@@ -102,7 +107,7 @@ impl Playground {
                     op: Ok(_),
                     ..
                 }) => {
-                    proxy.send_event(Reload).unwrap();
+                    proxy.send_event(UserEvents::Reload).unwrap();
                 }
                 Ok(event) => println!("broken event: {:?}", event),
                 Err(e) => println!("watch error: {:?}", e),
@@ -195,7 +200,7 @@ impl Playground {
     }
 
     pub fn run(opts: &Opts) {
-        let event_loop = EventLoopBuilder::<Reload>::with_user_event().build();
+        let event_loop = EventLoopBuilder::<UserEvents>::with_user_event().build();
         let proxy = event_loop.create_proxy();
 
         {
@@ -215,6 +220,22 @@ impl Playground {
         let instance = wgpu::Instance::new(Backends::all());
         let surface = unsafe { instance.create_surface(&window) };
         let (adapter, device, queue) = block_on(Self::get_async_stuff(&instance, &surface));
+
+        let mut error_state = false;
+
+        // Handle errors and stop redraw
+        let proxy = event_loop.create_proxy();
+        device.on_uncaptured_error(move |error| {
+            proxy.send_event(UserEvents::WGPUError).unwrap();
+            if let wgpu::Error::Validation { source, description } = error {
+                if let Some(_) = description.find("note: label = `Fragment shader`") {
+                    println!("{}", description);
+                }
+            } else {
+                println!("{}", error);
+            }
+        });
+
 
         let vertex_shader_module = device.create_shader_module(wgpu::ShaderModuleDescriptor {
             label: Some("Vertex shader"),
@@ -299,7 +320,6 @@ impl Playground {
         };
 
         let instant = Instant::now();
-
         event_loop.run(move |event, _, control_flow| match event {
             winit::event::Event::WindowEvent { ref event, .. } => match event {
                 WindowEvent::CloseRequested => *control_flow = ControlFlow::Exit,
@@ -355,11 +375,21 @@ impl Playground {
                 queue.submit(std::iter::once(encoder.finish()));
                 output.present();
             }
-            winit::event::Event::UserEvent(Reload) => {
-                playground.reload();
+            UserEvent(evt) => {
+                match evt {
+                    UserEvents::Reload => {
+                        error_state = false;
+                        playground.reload()
+                    },
+                    UserEvents::WGPUError => {
+                        error_state = true;
+                    }
+                }
             }
             winit::event::Event::MainEventsCleared => {
-                playground.window.request_redraw();
+                if !error_state {
+                    playground.window.request_redraw();
+                }
             }
             _ => {}
         });
