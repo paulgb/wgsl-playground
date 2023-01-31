@@ -228,7 +228,7 @@ impl Playground {
         device.on_uncaptured_error(move |error| {
             // Sending the event will stop the redraw
             proxy.send_event(UserEvents::WGPUError).unwrap();
-            if let wgpu::Error::Validation { source, description } = error {
+            if let wgpu::Error::Validation { source: _, description } = error {
                 if let Some(_) = description.find("note: label = `Fragment shader`") {
                     println!("{}", description);
                 }
