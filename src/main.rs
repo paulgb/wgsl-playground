@@ -18,20 +18,19 @@ use wgpu::{
     RenderPipeline, RequestAdapterOptions, ShaderModule, ShaderSource, ShaderStages, Surface,
     SurfaceConfiguration, TextureFormat,
 };
+use winit::event::Event::UserEvent;
 use winit::{
     dpi::PhysicalSize,
     event::WindowEvent,
     event_loop::{ControlFlow, EventLoopBuilder, EventLoopProxy},
     window::{Window, WindowBuilder},
 };
-use winit::event::Event::UserEvent;
 
 #[derive(Debug)]
 enum UserEvents {
     Reload,
     WGPUError,
 }
-
 
 #[derive(Parser)]
 struct Opts {
@@ -103,10 +102,10 @@ impl Playground {
         loop {
             match rx.recv() {
                 Ok(RawEvent {
-                       path: Some(_),
-                       op: Ok(_),
-                       ..
-                   }) => {
+                    path: Some(_),
+                    op: Ok(_),
+                    ..
+                }) => {
                     proxy.send_event(UserEvents::Reload).unwrap();
                 }
                 Ok(event) => println!("broken event: {:?}", event),
@@ -228,7 +227,11 @@ impl Playground {
         device.on_uncaptured_error(move |error| {
             // Sending the event will stop the redraw
             proxy.send_event(UserEvents::WGPUError).unwrap();
-            if let wgpu::Error::Validation { source: _, description } = error {
+            if let wgpu::Error::Validation {
+                source: _,
+                description,
+            } = error
+            {
                 if let Some(_) = description.find("note: label = `Fragment shader`") {
                     println!("{}", description);
                 }
@@ -306,7 +309,6 @@ impl Playground {
             }],
         });
 
-
         let mut playground = Playground {
             watch_path: opts.wgsl_file.clone(),
             render_pipeline,
@@ -319,7 +321,6 @@ impl Playground {
             surface,
             uniforms,
         };
-
 
         let instant = Instant::now();
         event_loop.run(move |event, _, control_flow| match event {
@@ -377,17 +378,15 @@ impl Playground {
                 queue.submit(std::iter::once(encoder.finish()));
                 output.present();
             }
-            UserEvent(evt) => {
-                match evt {
-                    UserEvents::Reload => {
-                        error_state = false;
-                        playground.reload()
-                    }
-                    UserEvents::WGPUError => {
-                        error_state = true;
-                    }
+            UserEvent(evt) => match evt {
+                UserEvents::Reload => {
+                    error_state = false;
+                    playground.reload()
                 }
-            }
+                UserEvents::WGPUError => {
+                    error_state = true;
+                }
+            },
             winit::event::Event::MainEventsCleared => {
                 if !error_state {
                     playground.window.request_redraw();
