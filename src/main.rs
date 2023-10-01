@@ -49,6 +49,7 @@ struct Uniforms {
     pub mouse: [f32; 2],
     pub time: f32,
     pub pad: f32,
+    pub window_size: [f32; 2],
 }
 
 impl Default for Uniforms {
@@ -57,6 +58,7 @@ impl Default for Uniforms {
             time: 0.,
             mouse: [0.0, 0.0],
             pad: 0.,
+            window_size: [0., 0.],
         }
     }
 }
@@ -194,6 +196,8 @@ impl Playground {
             self.surface_config.height = new_size.height;
 
             self.surface.configure(&self.device, &self.surface_config);
+            let logical_size = new_size.to_logical(self.window.scale_factor());
+            self.uniforms.window_size = [logical_size.width, logical_size.height];
             self.window.request_redraw();
         }
     }
