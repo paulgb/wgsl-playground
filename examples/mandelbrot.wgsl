@@ -5,7 +5,7 @@ struct VertexOutput {
     @location(0) coord: vec2<f32>,
 };
 
-let ITERATIONS: i32 = 45;
+const ITERATIONS: i32 = 45;
 
 @fragment
 fn fs_main(in: VertexOutput) -> @location(0) vec4<f32> {
