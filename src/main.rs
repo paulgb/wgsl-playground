@@ -11,12 +11,12 @@ use std::{
 };
 use wgpu::{
     util::{BufferInitDescriptor, DeviceExt},
-    Adapter, Backends, BindGroupDescriptor, BindGroupEntry, BindGroupLayoutDescriptor,
-    BindGroupLayoutEntry, BufferBindingType, BufferUsages, CommandEncoderDescriptor,
-    CompositeAlphaMode, Device, DeviceDescriptor, Features, Instance, Limits, LoadOp, Operations,
-    PipelineLayout, PrimitiveState, Queue, RenderPassColorAttachment, RenderPassDescriptor,
-    RenderPipeline, RequestAdapterOptions, ShaderModule, ShaderSource, ShaderStages, Surface,
-    SurfaceConfiguration, TextureFormat,
+    Adapter, BindGroupDescriptor, BindGroupEntry, BindGroupLayoutDescriptor, BindGroupLayoutEntry,
+    BufferBindingType, BufferUsages, CommandEncoderDescriptor, CompositeAlphaMode, Device,
+    DeviceDescriptor, Features, Instance, Limits, LoadOp, Operations, PipelineLayout,
+    PrimitiveState, Queue, RenderPassColorAttachment, RenderPassDescriptor, RenderPipeline,
+    RequestAdapterOptions, ShaderModule, ShaderSource, ShaderStages, Surface, SurfaceConfiguration,
+    TextureFormat,
 };
 use winit::event::Event::UserEvent;
 use winit::{
@@ -220,15 +220,15 @@ impl Playground {
 
         window.set_always_on_top(opts.always_on_top);
 
-        let instance = wgpu::Instance::new(Backends::all());
-        let surface = unsafe { instance.create_surface(&window) };
+        let instance = wgpu::Instance::new(wgpu::InstanceDescriptor::default());
+        let surface = unsafe { instance.create_surface(&window) }.unwrap();
         let (adapter, device, queue) = block_on(Self::get_async_stuff(&instance, &surface));
 
         let mut error_state = false;
 
         // Handle errors
         let proxy = event_loop.create_proxy();
-        device.on_uncaptured_error(move |error| {
+        device.on_uncaptured_error(Box::new(move |error| {
             // Sending the event will stop the redraw
             proxy.send_event(UserEvents::WGPUError).unwrap();
             if let wgpu::Error::Validation {
@@ -242,7 +242,7 @@ impl Playground {
             } else {
                 println!("{}", error);
             }
-        });
+        }));
 
         let vertex_shader_module = device.create_shader_module(wgpu::ShaderModuleDescriptor {
             label: Some("Vertex shader"),
@@ -277,7 +277,8 @@ impl Playground {
             push_constant_ranges: &[],
         });
 
-        let swapchain_format = surface.get_supported_formats(&adapter);
+        let caps = surface.get_capabilities(&adapter);
+        let swapchain_format = caps.formats;
 
         let render_pipeline = match Self::create_pipeline(
             &device,
@@ -300,6 +301,7 @@ impl Playground {
             height: size.height,
             present_mode: wgpu::PresentMode::Fifo,
             alpha_mode: CompositeAlphaMode::Auto,
+            view_formats: swapchain_format.clone(),
         };
 
         surface.configure(&device, &surface_config);
