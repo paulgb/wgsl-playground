@@ -278,13 +278,13 @@ impl Playground {
         });
 
         let caps = surface.get_capabilities(&adapter);
-        let swapchain_format = caps.formats;
-
+        let swapchain_format = caps.formats[0];
+        
         let render_pipeline = match Self::create_pipeline(
             &device,
             &vertex_shader_module,
             &pipeline_layout,
-            swapchain_format[0],
+            swapchain_format,
             &opts.wgsl_file,
         ) {
             Ok(render_pipeline) => render_pipeline,
@@ -296,12 +296,12 @@ impl Playground {
 
         let surface_config = SurfaceConfiguration {
             usage: wgpu::TextureUsages::RENDER_ATTACHMENT,
-            format: swapchain_format[0],
+            format: swapchain_format,
             width: size.width,
             height: size.height,
             present_mode: wgpu::PresentMode::Fifo,
             alpha_mode: CompositeAlphaMode::Auto,
-            view_formats: swapchain_format.clone(),
+            view_formats: vec![swapchain_format],
         };
 
         surface.configure(&device, &surface_config);
@@ -320,7 +320,7 @@ impl Playground {
             render_pipeline,
             window,
             device,
-            swapchain_format: swapchain_format[0],
+            swapchain_format: swapchain_format,
             pipeline_layout,
             vertex_shader_module,
             surface_config,
